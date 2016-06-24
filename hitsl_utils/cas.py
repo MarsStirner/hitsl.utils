@@ -117,7 +117,12 @@ class CasExtension(object):
         raise CasAuthApiException
 
     def _cas_not_available(self, e):
-        return u'Невозможно связаться с подсистемой централизованной аутентификации'
+        is_api = getattr(self.app.view_functions[request.endpoint], 'is_api', False)
+        msg = u'Невозможно связаться с подсистемой централизованной аутентификации'
+        if is_api:
+            return jsonify(None, 500, msg)
+        else:
+            return msg
 
     def _cas_auth_api_exception(self, e):
         return jsonify(None, 401, e.message)
