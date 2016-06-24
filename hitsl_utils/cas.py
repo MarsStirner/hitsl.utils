@@ -71,7 +71,7 @@ class CasExtension(object):
         app.errorhandler(CasAuthApiException)(self._cas_auth_api_exception)
 
     def _before_request(self):
-        if not (request.endpoint and 'static' not in request.endpoint and
+        if request.method == 'OPTIONS' or not (request.endpoint and 'static' not in request.endpoint and
                 not getattr(self.app.view_functions[request.endpoint], 'cas_is_public', False)):
             return
 
