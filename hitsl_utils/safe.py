@@ -4,28 +4,10 @@ import uuid
 import datetime
 import pytz
 
+from decimal import Decimal
+
+
 __author__ = 'viruzzz-kun'
-
-
-def string_to_datetime(date_string, formats=None):
-    # TODO: Надо разобраться с магией часовых поясов.
-    if formats is None:
-        formats = ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S+00:00', '%Y-%m-%dT%H:%M:%S.%f+00:00')
-    elif not isinstance(formats, (tuple, list)):
-        formats = (formats, )
-
-    if date_string:
-        for fmt in formats:
-            try:
-                dt = datetime.datetime.strptime(date_string, fmt)
-                break
-            except ValueError:
-                continue
-        else:
-            raise ValueError
-        return pytz.timezone('UTC').localize(dt).astimezone(tz=pytz.timezone(app.config.get('TIME_ZONE', 'Europe/Moscow'))).replace(tzinfo=None)
-    else:
-        return date_string
 
 
 def safe_unicode(obj):
@@ -52,15 +34,35 @@ def safe_dict(obj):
     return obj
 
 
-def safe_datetime(val):
+def string_to_datetime(date_string, formats=None, tz='Europe/Moscow'):
+    if formats is None:
+        formats = ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S+00:00', '%Y-%m-%dT%H:%M:%S.%f+00:00')
+    elif not isinstance(formats, (tuple, list)):
+        formats = (formats, )
+
+    if date_string:
+        for fmt in formats:
+            try:
+                dt = datetime.datetime.strptime(date_string, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            raise ValueError
+        return pytz.timezone('UTC').localize(dt).astimezone(tz=tz).replace(tzinfo=None)
+    else:
+        return date_string
+
+
+def safe_datetime(val, tz='Europe/Moscow'):
     if not val:
         return None
     if isinstance(val, basestring):
         try:
-            val = string_to_datetime(val)
+            val = string_to_datetime(val, tz=tz)
         except ValueError:
             try:
-                val = string_to_datetime(val, '%Y-%m-%d')
+                val = string_to_datetime(val, '%Y-%m-%d', tz=tz)
             except ValueError:
                 return None
         return val
@@ -72,15 +74,15 @@ def safe_datetime(val):
         return None
 
 
-def safe_date(val):
+def safe_date(val, tz='Europe/Moscow'):
     if not val:
         return None
     if isinstance(val, basestring):
         try:
-            val = string_to_datetime(val)
+            val = string_to_datetime(val, tz=tz)
         except ValueError:
             try:
-                val = string_to_datetime(val, '%Y-%m-%d')
+                val = string_to_datetime(val, '%Y-%m-%d', tz=tz)
             except ValueError:
                 return None
         return val.date()
@@ -155,10 +157,47 @@ def safe_bool(val):
     return bool(val)
 
 
+def safe_bool_none(val):
+    if val is None:
+        return None
+    return safe_bool(val)
+
+
+def safe_double(val):
+    if val is None:
+        return None
+    if isinstance(val, basestring):
+        val = val.replace(',', '.')
+    try:
+        val = float(val)
+    except ValueError:
+        val = None
+    return val
+
+
+def safe_decimal(val):
+    if val is None:
+        return None
+    val = Decimal(val)
+    return val
+
+
+def format_money(val, scale=2):
+    if val is None:
+        return None
+    if isinstance(val, Decimal):
+        twoplaces = Decimal(10) ** -scale
+        val = val.quantize(twoplaces)
+    return '{{0:.{0}f}}'.format(scale).format(val)
+
+
 def safe_uuid(val):
     if not isinstance(val, basestring):
         return None
-    u_obj = uuid.UUID(val)
+    try:
+        u_obj = uuid.UUID(val)
+    except ValueError:
+        return None
     return u_obj
 
 
@@ -169,6 +208,22 @@ def safe_hex_color(val):
         return val[1:]
 
 
+def format_hex_color(val):
+    if not isinstance(val, basestring):
+        return None
+    if len(val) == 6:
+        val = '#' + val
+    if val.startswith('#') and len(val) == 7:
+        return val
+
+
+def format_date(d):
+    if isinstance(d, datetime.date):
+        return d.strftime('%d.%m.%Y')
+    else:
+        return d
+
+
 def parse_json(json_string):
     try:
         result = json.loads(json_string)
@@ -177,3 +232,11 @@ def parse_json(json_string):
     return result
 
 
+def get_utc_datetime_with_tz(dt=None, tz='Europe/Moscow'):
+    """Получить датувремя в ютс с таймзоной.
+    С последующим .isoformat() результат будет в таком же формате,
+    как в запросе из браузера"""
+    if not dt:
+        dt = datetime.datetime.now()
+    dt_with_tz = pytz.timezone(tz).localize(dt)
+    return dt_with_tz.astimezone(pytz.timezone('UTC'))
