@@ -12,9 +12,9 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name='hitsl.utils',
-    version='0.1.0',
-    url='https://bitbucket.org/hitsl/hitsl.utils',
+    name='hitsl_utils',
+    version='0.2.0',
+    url='https://stash.bars-open.ru/scm/medvtr/hitsl.utils.git',
     author='hitsl',
     description='Small utilities used in HITSL',
     long_description=read('README.md'),
