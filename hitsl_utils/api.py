@@ -4,7 +4,7 @@ import functools
 import json
 import traceback
 import datetime
-from flask import make_response
+from flask import make_response, request, current_app
 
 __author__ = 'viruzzz-kun'
 
@@ -142,16 +142,16 @@ def crossdomain(origin=None, methods=None, headers=None,
         if methods is not None:
             return methods
 
-        options_resp = flask.current_app.make_default_options_response()
+        options_resp = current_app.make_default_options_response()
         return options_resp.headers['allow']
 
     def decorator(f):
         def wrapped_function(*args, **kwargs):
-            if automatic_options and flask.request.method == 'OPTIONS':
-                resp = flask.current_app.make_default_options_response()
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
             else:
-                resp = flask.make_response(f(*args, **kwargs))
-            if not attach_to_all and flask.request.method != 'OPTIONS':
+                resp = make_response(f(*args, **kwargs))
+            if not attach_to_all and request.method != 'OPTIONS':
                 return resp
 
             h = resp.headers
