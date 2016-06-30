@@ -227,7 +227,7 @@ def format_date(d):
 def parse_json(json_string):
     try:
         result = json.loads(json_string)
-    except ValueError:
+    except (ValueError, TypeError):
         result = None
     return result
 
