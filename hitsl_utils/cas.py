@@ -5,6 +5,7 @@ import requests
 import urllib2
 from flask import request, redirect, json, session
 from hitsl_utils.api import jsonify
+from hitsl_utils.safe import safe_traverse
 
 __author__ = 'viruzzz-kun'
 
@@ -38,6 +39,8 @@ class CasExtension(object):
             self.cookie_name = 'CastielAuthToken'
             self.cas_external_address = 'http://127.0.0.1:5001/'
             self.cas_internal_address = self.cas_external_address
+            self.ext_cas_enabled = False
+            self.ext_cas_cookie = ''
         else:
             self.init_app(app)
         self.app = app
@@ -52,6 +55,8 @@ class CasExtension(object):
         config.setdefault('AUTH_COOKIE', 'CastielAuthToken')
         config.setdefault('ADDRESS', 'http://127.0.0.1:5001')
         config.setdefault('ADDRESS_INTERNAL', config['ADDRESS'])
+        config['EXT_CAS_ENABLED'] = safe_traverse(app.config, 'external_cas', 'enabled', default=False)
+        config['EXT_CAS_COOKIE'] = safe_traverse(app.config, 'external_cas', 'ext_cookie_name')
         return config
 
     def init_app(self, app):
@@ -66,6 +71,8 @@ class CasExtension(object):
         self.cookie_name = config['AUTH_COOKIE']
         self.cas_external_address = config['ADDRESS']
         self.cas_internal_address = config['ADDRESS_INTERNAL']
+        self.ext_cas_enabled = config['EXT_CAS_ENABLED']
+        self.ext_cas_cookie = config['EXT_CAS_COOKIE']
         app.before_request(self._before_request)
         app.errorhandler(CasNotAvailable)(self._cas_not_available)
         app.errorhandler(CasAuthApiException)(self._cas_auth_api_exception)
@@ -94,9 +101,12 @@ class CasExtension(object):
 
     def _check_cas_token(self, token):
         try:
+            data = {'token': token, 'prolong': True}
+            if self.ext_cas_enabled:
+                data['ext_cookie'] = request.cookies.get(self.ext_cas_cookie)
             result = requests.post(
                 self.cas_internal_address + 'cas/api/check',
-                data=json.dumps({'token': token, 'prolong': True}),
+                data=json.dumps(data),
                 headers={'Referer': request.url.encode('utf-8')}
             )
         except requests.ConnectionError:

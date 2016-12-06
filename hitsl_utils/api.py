@@ -111,6 +111,7 @@ def api_method(func):
     :param func: декорируемая функция
     :type func: callable
     """
+    func.is_api = True
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
