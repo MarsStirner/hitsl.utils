@@ -34,6 +34,13 @@ def safe_dict(obj):
     return obj
 
 
+def localize_datetime(dt, tz='Europe/Moscow'):
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(pytz.timezone('UTC'))
+        dt = dt.replace(tzinfo=None)
+    return pytz.timezone('UTC').localize(dt).astimezone(tz=pytz.timezone(tz)).replace(tzinfo=None)
+
+
 def string_to_datetime(date_string, formats=None, tz='Europe/Moscow'):
     if formats is None:
         formats = ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S+00:00', '%Y-%m-%dT%H:%M:%S.%f+00:00')
@@ -49,7 +56,7 @@ def string_to_datetime(date_string, formats=None, tz='Europe/Moscow'):
                 continue
         else:
             raise ValueError
-        return pytz.timezone('UTC').localize(dt).astimezone(tz=tz).replace(tzinfo=None)
+        return localize_datetime(dt, tz)
     else:
         return date_string
 
