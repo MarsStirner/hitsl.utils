@@ -50,9 +50,9 @@ class CasExtension(object):
         config = app.config.get('CASTIEL', {})
         for key, value in app.config.iteritems():
             if key.startswith('CASTIEL_'):
-                config[key[7:]] = value.strip().rstrip('/')
+                config[key[8:]] = value.strip().rstrip('/')
         config['ADDRESS'] = app.config['COLDSTAR_URL']
-        config.setdefault('AUTH_COOKIE', 'CastielAuthToken')
+        config.setdefault('AUTH_TOKEN', 'CastielAuthToken')
         config.setdefault('ADDRESS', 'http://127.0.0.1:5001')
         config.setdefault('ADDRESS_INTERNAL', config['ADDRESS'])
         config['EXT_CAS_ENABLED'] = safe_traverse(app.config, 'external_cas', 'enabled', default=False)
@@ -68,7 +68,7 @@ class CasExtension(object):
         """
         self.app = app
         config = self.__make_config(app)
-        self.cookie_name = config['AUTH_COOKIE']
+        self.cookie_name = config['AUTH_TOKEN']
         self.cas_external_address = config['ADDRESS']
         self.cas_internal_address = config['ADDRESS_INTERNAL']
         self.ext_cas_enabled = config['EXT_CAS_ENABLED']
