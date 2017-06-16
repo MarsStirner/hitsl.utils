@@ -13,7 +13,7 @@ def read(fname):
 
 setup(
     name='hitsl_utils',
-    version='0.2.1',
+    version='0.2.2',
     url='https://stash.bars-open.ru/scm/medvtr/hitsl.utils.git',
     author='hitsl',
     description='Small utilities used in HITSL',
